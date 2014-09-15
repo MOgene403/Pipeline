@@ -16,9 +16,11 @@ die "usage: perl $0 <Config file>\n\n" unless $#ARGV==0;
 my $Config = Configuration->new($ARGV[0]);
 
 my $nThreads = $Config->get("OPTIONS","Threads");
+$nThreads = 3 if $nThreads > 3;
 
 warn "Recognizing $nThreads as max threading...\n";
 
+my $ref=$Config->get("PATHS","reference_dir");
 warn "Finding Vectors...\n";
 my $vecDir = $Config->get("PATHS","vector_dir");
 my @LineNo = $Config->getAll("VECTORS");
@@ -26,7 +28,7 @@ my @LineNo = $Config->getAll("VECTORS");
 foreach my $i (@LineNo){
       $q->enqueue($i);
 }
-for(my$i=0;$i<1;$i++){
+for(my$i=0;$i<$nThreads;$i++){
       my $thr=threads->create(\&worker);
 }
 while(threads->list()>0){
@@ -38,25 +40,17 @@ while(threads->list()>0){
 sub worker {
 	my $TID=threads->tid() -1 ;
 	while(my$j=$q->dequeue_nb()){
-		my ($R1,$R2)=split(/\,/,$Config->get("GROUPS",$j));
-		my $P1=$Config->get("PATHS","output_dir")."/".$j.".R1.fastq";
-		my $P2=$Config->get("PATHS","output_dir")."/".$j.".R2.fastq";
-		my $outputDir = $Config->get("PATHS","output_dir");
-		my $samtools = $Config->get("PATHS","samtools");
-		my $bwaRef= $Config->get("PATHS","temp_dir")."/$j.ref.fasta";
-		my $bwaRoot=$outputDir."/$j.Alignments";
-		my $bwaAln=$bwaRoot.".bam";
-		my $cmd=$Config->get("PATHS","bwa")." mem -t $nThreads $bwaRef $P1 $P2 | $samtools view -bS - > $bwaAln";
+		my $path=$Config->get("PATHS","vector_dir")."/".$Config->get("VECTORS",$j);
+		my $reference = $Config->get("PATHS","reference_dir")."/".$Config->get("BACKGROUNDS",$j);
+		warn "Loading $path ...\n";
+		my $outputDir = $Config->get("PATHS","temp_dir");
+		mkdir $outputDir unless -e $outputDir;
+		my $file=$outputDir."/".$j.".ref.fasta";
+		my $cmd="cat $reference $path > $file";
+		warn $cmd."\n";	
+		`$cmd`;
+		$cmd=$Config->get("PATHS","bwa")." index $file";
 		warn $cmd."\n";
-		`$cmd`;
-		my $sorted=$bwaRoot.".sorted";
-		$cmd = $samtools." sort $bwaAln $sorted";
-		`$cmd`;
-		$cmd = $samtools." index ".$sorted.".bam";
-		`$cmd`;
-		my $depthscript = $Config->get("PATHS","depthScript");
-		my $depthout	= $outputDir."/ContigDepths.txt";
-		$cmd = $samtools." depth ".$sorted.".bam | perl $depthscript > ContigDepths.txt";
 		`$cmd`;
 	}
 }

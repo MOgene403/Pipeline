@@ -9,13 +9,16 @@ Min3pLength  = 50
 FivePrimeTrimmer= /home/ec2-user/Store1/Filtering/Lib/TrimFrontFastq.pl
 fastq_quality_trimmer = /Installs/fastx-toolkit/fastq_quality_trimmer
 PairsAndOrphans = /home/ec2-user/Store1/Filtering/Scripts/GetPairsSinglesFastqs.Illumina1.8.pl
+delly		= /home/ec2-user/Store1/Pipeline/bin/delly_v0.5.4_parallel_linux_x86_64bit
+depthScript	= /home/ec2-user/Store1/Pipeline/Scripts/GetMaxPerContig.pl
 bwa 		= /Installs/bwa
 samtools	= /Installs/samtools
 vector_dir	= /home/ec2-user/Store1/References/Vectors
 reference_dir	= /home/ec2-user/Store1/References
 data_dir	= /home/ec2-user/Store1/Data
-output_dir	= /home/ec2-user/Store1/Results
+output_dir	= /home/ec2-user/Store1/Final
 temp_dir	= /home/ec2-user/Store1/Temp
+
 
 [PIPELINE]
 FivePrimeFilter	= 1
