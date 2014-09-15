@@ -56,7 +56,7 @@ sub worker {
 		`$cmd`;
 		my $depthscript = $Config->get("PATHS","depthScript");
 		my $depthout	= $outputDir."/ContigDepths.txt";
-		$cmd = $samtools." depth ".$sorted.".bam | perl $depthscript > ContigDepths.txt";
+		$cmd = $samtools." depth ".$sorted.".bam | perl $depthscript > $outputDir/$j.ContigDepths.txt";
 		`$cmd`;
 	}
 }
