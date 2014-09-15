@@ -1,0 +1,30 @@
+[OPTIONS]
+Threads	= 8
+LengthOf5pTrim = 15
+Min3pQuality = 30
+Min3pLength  = 50
+
+
+[PATHS]
+FivePrimeTrimmer= /home/ec2-user/Store1/Filtering/Lib/TrimFrontFastq.pl
+fastq_quality_trimmer = /Installs/fastx-toolkit/fastq_quality_trimmer
+PairsAndOrphans = /home/ec2-user/Store1/Filtering/Scripts/GetPairsSinglesFastqs.Illumina1.8.pl
+
+[PIPELINE]
+FivePrimeFilter	= 1
+ThreePrimeFilter= 1
+PairedEnd	= 1
+Compressed	= 0
+
+[GROUPS]
+FSR14004-1508_S6 = FSR14004-1508_S6_L001_R1_001.fastq,FSR14004-1508_S6_L001_R2_001.fastq
+FSR14004-1515_S7 = FSR14004-1515_S7_L001_R1_001.fastq,FSR14004-1515_S7_L001_R2_001.fastq
+FSR14004-B10-123_S34 = FSR14004-B10-123_S34_L001_R1_001.fastq,FSR14004-B10-123_S34_L001_R2_001.fastq
+FSR14004-B12-124_S36 = FSR14004-B12-124_S36_L001_R1_001.fastq,FSR14004-B12-124_S36_L001_R2_001.fastq
+FSR14004-C02-131_S38 = FSR14004-C02-131_S38_L001_R1_001.fastq,FSR14004-C02-131_S38_L001_R2_001.fastq
+FSR14004-C03-126_S39 = FSR14004-C03-126_S39_L001_R1_001.fastq,FSR14004-C03-126_S39_L001_R2_001.fastq
+
+
+[DIRECTORIES]
+Data = /home/ec2-user/Store1/Data
+Output	= /home/ec2-user/Store1/Final
