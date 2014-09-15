@@ -9,12 +9,35 @@ Min3pLength  = 50
 FivePrimeTrimmer= /home/ec2-user/Store1/Filtering/Lib/TrimFrontFastq.pl
 fastq_quality_trimmer = /Installs/fastx-toolkit/fastq_quality_trimmer
 PairsAndOrphans = /home/ec2-user/Store1/Filtering/Scripts/GetPairsSinglesFastqs.Illumina1.8.pl
+bwa 		= /Installs/bwa
+samtools	= /Installs/samtools
+vector_dir	= /home/ec2-user/Store1/References/Vectors
+reference_dir	= /home/ec2-user/Store1/References
+data_dir	= /home/ec2-user/Store1/Data
+output_dir	= /home/ec2-user/Store1/Results
+temp_dir	= /home/ec2-user/Store1/Temp
 
 [PIPELINE]
 FivePrimeFilter	= 1
 ThreePrimeFilter= 1
 PairedEnd	= 1
 Compressed	= 0
+
+[BACKGROUNDS]
+FSR14004-1508_S6 = Zea_mays.AGPv3.23.dna.genome.fa
+FSR14004-1515_S7 = Zea_mays.AGPv3.23.dna.genome.fa
+FSR14004-B10-123_S34 = Zea_mays.AGPv3.23.dna.genome.fa
+FSR14004-B12-124_S36 = Zea_mays.AGPv3.23.dna.genome.fa
+FSR14004-C02-131_S38 = Zea_mays.AGPv3.23.dna.genome.fa
+FSR14004-C03-126_S39 = Zea_mays.AGPv3.23.dna.genome.fa
+
+[VECTORS]
+FSR14004-1508_S6 = Construct.17629.fasta
+FSR14004-1515_S7 = Construct.20791.fasta
+FSR14004-B10-123_S34 = Construct.21119.fasta
+FSR14004-B12-124_S36 = Construct.21119.fasta
+FSR14004-C02-131_S38 = Construct.21119.fasta
+FSR14004-C03-126_S39 = Construct.21119.fasta
 
 [GROUPS]
 FSR14004-1508_S6 = FSR14004-1508_S6_L001_R1_001.fastq,FSR14004-1508_S6_L001_R2_001.fastq
@@ -24,7 +47,3 @@ FSR14004-B12-124_S36 = FSR14004-B12-124_S36_L001_R1_001.fastq,FSR14004-B12-124_S
 FSR14004-C02-131_S38 = FSR14004-C02-131_S38_L001_R1_001.fastq,FSR14004-C02-131_S38_L001_R2_001.fastq
 FSR14004-C03-126_S39 = FSR14004-C03-126_S39_L001_R1_001.fastq,FSR14004-C03-126_S39_L001_R2_001.fastq
 
-
-[DIRECTORIES]
-Data = /home/ec2-user/Store1/Data
-Output	= /home/ec2-user/Store1/Final

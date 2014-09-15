@@ -34,8 +34,8 @@ while(threads->list()>0){
 sub workerThread{
 	while(my $work=$q->dequeue_nb()){
 		my $grp=$work;
-		my $DataDir = $config->get("DIRECTORIES","Data");
-		my $OutDir  = $config->get("DIRECTORIES","Output");
+		my $DataDir = $config->get("PATHS","data_dir");
+		my $OutDir  = $config->get("PATHS","output_dir");
 		my $workThreads = $config->get("OPTIONS","workThreads");
 		my @CurrentSourcePaths;
 		my @GarbageCollector;
