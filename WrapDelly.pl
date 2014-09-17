@@ -42,18 +42,22 @@ sub worker {
 		my ($R1,$R2)=split(/\,/,$Config->get("DATA",$j));
 		my $P1=$Config->get("PATHS","output_dir")."/$j.R1.fastq";
 		my $P2=$Config->get("PATHS","output_dir")."/$j.R2.fastq";
-		my $outputDir = $Config->get("PATHS","output_dir");
+		my $inputDir = $Config->get("PATHS","output_dir");
 		my $samtools = $Config->get("PATHS","samtools");
 		my $bwaRef=$Config->get("PATHS","temp_dir")."/".$j.".ref.fasta";
-		my $bwaRoot=$outputDir."/$j.Alignments";
-		my $depths =$outputDir."/$j.ContigDepths.txt";
+		my $bwaRoot=$inputDir."/$j.Alignments";
+		my $depths =$inputDir."/$j.ContigDepths.txt";
 		my $bwaAln=$bwaRoot.".sorted.bam";
 		my $RunDelly=$Config->get("PATHS","RunDelly");
 		my $delly = $Config->get("PATHS","delly");
-		my $ins = $Config->get("INSERTS",$j);
-		my $cmd="perl $RunDelly $bwaRef $depths 50 ".$ins." ".$bwaAln." ".$delly." ".$j;
+		my  $outputDir = $Config->get("PATHS","output_dir")."/VCFs";
+		mkdir $outputDir unless -e $outputDir;
+		warn "making $outputDir\n";
+		my $rootLoc = $outputDir."/".$j;
+		my $cmd="perl $RunDelly $bwaRef $depths 50 $j ".$bwaAln." ".$ARGV[0];
+		warn $cmd."\n";
 		`$cmd`;
-		print $cmd."\n";
+		#print $cmd."\n";
 #usage: perl RunDelly.bestN.pl <reference fasta file> <file of contig IDs to search> <N - number of contigs to search (i.e., '50' for top 50) <id of insertional chromosome> <PE bam><
 	}
 }

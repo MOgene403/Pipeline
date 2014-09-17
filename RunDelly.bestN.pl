@@ -8,17 +8,21 @@ use hdpTools;
 use threads;
 use threads::shared;
 use Thread::Queue;
+use Configuration;
 my $q = Thread::Queue->new();
-die "usage: perl $0 <reference fasta file> <file of contig IDs to search> <N - number of contigs to search (i.e., '50' for top 50) <id of insertional chromosome> <PE bam> <path to delly> <job id>\n\n" unless $#ARGV==6;
-
+my $usage = "usage: perl $0 <reference fasta file> <file of contig IDs to search> <N - number of contigs to search (i.e., '50' for top 50) <id of insertional chromosome> <PE bam> <config>\n\n";
+die $usage unless $#ARGV==5;
 my $file=$ARGV[0];
 my @Best=@{hdpTools->LoadFile($ARGV[1])};
 my $N  	=$ARGV[2];
-my $id	=$ARGV[3];
+my $job	=$ARGV[3];
 my $PE	=$ARGV[4];
-my $delly=$ARGV[5];
-my $job = $ARGV[6];
-
+my $config = $ARGV[5];
+#my $delly=$ARGV[5];
+#my $job = $ARGV[6];
+my $Config = Configuration->new($config);
+my $delly = $Config->get("PATHS","delly");
+my $id = $Config->get("INSERTS",$job);
 my @IDs;
 foreach my $line (@Best){
 	my ($contig,$depth)=split(/\t/,$line);
@@ -28,7 +32,6 @@ foreach my $line (@Best){
 my $temp="./temp";
 mkdir $temp unless -e $temp;
 my $bkf=$temp."/badkeys.txt";
-
 
 my %Fasta=%{hdpTools->LoadFasta($file)};
 
@@ -58,13 +61,27 @@ sub worker {
 			last unless defined $keys[$i];
 			push @badkeys, $keys[$i] unless $keys[$i] eq $key;
 		}
-		my $bk=$bkf.".$j";
+		my $bk=$bkf.".$job.$j";
 		hdpTools->printToFile($bk,\@badkeys);
-		my $tfile=$job.".".$key;
-		$tfile=~s/\|/-/g;
-		$tfile.=".vcf";
-	#	my $cmd=$delly." -t TRA -o $tfile -q 30 -g $file -x $bk $PE";
+		my  $outputDir = $Config->get("PATHS","output_dir")."/VCFs";
+		my $tfileR=$outputDir."/".$job.".".$key;
+		print $tfileR."\n";
+		$tfileR=~s/\|/-/g;
+		#(DEL, DUP, INV, TRA)
+		my $tfile=$tfileR.".TRA.vcf";
 		my $cmd=$delly." -t TRA -o $tfile -q 30 -x $bk $PE";
+		warn $cmd."\n";
+		`$cmd`;
+		$tfile=$tfileR.".DEL.vcf";
+		$cmd=$delly." -t DEL -o $tfile -q 30 -x $bk $PE";
+		warn $cmd."\n";
+		`$cmd`;
+		$tfile=$tfileR.".DUP.vcf";
+		$cmd=$delly." -t DUP -o $tfile -q 30 -x $bk $PE";
+		warn $cmd."\n";
+		`$cmd`;
+		$tfile=$tfileR.".INV.vcf";
+		$cmd=$delly." -t INV -o $tfile -q 30 -x $bk $PE";
 		warn $cmd."\n";
 		`$cmd`;
 	}
