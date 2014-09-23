@@ -1,30 +1,66 @@
 [OPTIONS]
-Threads	= 8
-LengthOf5pTrim = 15
-Min3pQuality = 30
-Min3pLength  = 50
-
+Threads		= 8
+snpRate		= 0.2
+minCov		= 1
 
 [PATHS]
-FivePrimeTrimmer= /home/ec2-user/Store1/Filtering/Lib/TrimFrontFastq.pl
-fastq_quality_trimmer = /Installs/fastx-toolkit/fastq_quality_trimmer
-PairsAndOrphans = /home/ec2-user/Store1/Filtering/Scripts/GetPairsSinglesFastqs.Illumina1.8.pl
-
-[PIPELINE]
-FivePrimeFilter	= 1
-ThreePrimeFilter= 1
-PairedEnd	= 1
-Compressed	= 0
-
-[GROUPS]
-FSR14004-1508_S6 = FSR14004-1508_S6_L001_R1_001.fastq,FSR14004-1508_S6_L001_R2_001.fastq
-FSR14004-1515_S7 = FSR14004-1515_S7_L001_R1_001.fastq,FSR14004-1515_S7_L001_R2_001.fastq
-FSR14004-B10-123_S34 = FSR14004-B10-123_S34_L001_R1_001.fastq,FSR14004-B10-123_S34_L001_R2_001.fastq
-FSR14004-B12-124_S36 = FSR14004-B12-124_S36_L001_R1_001.fastq,FSR14004-B12-124_S36_L001_R2_001.fastq
-FSR14004-C02-131_S38 = FSR14004-C02-131_S38_L001_R1_001.fastq,FSR14004-C02-131_S38_L001_R2_001.fastq
-FSR14004-C03-126_S39 = FSR14004-C03-126_S39_L001_R1_001.fastq,FSR14004-C03-126_S39_L001_R2_001.fastq
-
+bwa 		= /Installs/bwa
+samtools	= /Installs/samtools
+delly		= /home/ec2-user/Store1/Pipeline/bin/delly_v0.5.4_parallel_linux_x86_64bit
+RunDelly	= /home/ec2-user/Store1/Pipeline/RunDelly.bestN.pl
+depthScript	= /home/ec2-user/Store1/Pipeline/GetMaxPerContig.pl
+bcftools	= /Installs/samtools-0.1.19/bcftools/bcftools
+reference	= /home/ec2-user/Store1/References/Zea_mays.AGPv3.23.dna.genome.fa
 
 [DIRECTORIES]
-Data = /home/ec2-user/Store1/Data
-Output	= /home/ec2-user/Store1/Final
+reference	= /home/ec2-user/Store1/References
+vector_dir	= /home/ec2-user/Store1/References/Vectors
+data_dir	= /home/ec2-user/Store1/Data
+output_dir	= /home/ec2-user/Store1/Results
+temp_dir	= /home/ec2-user/Store1/Temp
+
+
+[CELL_LINE]
+#### Cell_LINE_No = directory suffix (attached to output_dir)
+31 = FSR14004-C01-125
+32 = FSR14004-C02-131
+33 = FSR14004-C03-126
+34 = FSR14004-C04-132
+35 = FSR14004-C05-127
+36 = FSR14004-C06-133
+37 = FSR14004-C07-128
+38 = FSR14004-C08-134
+39 = FSR14004-C09-129
+40 = FSR14004-C10-135
+41 = FSR14004-C11-130
+42 = FSR14004-C12-136
+
+[DATA]
+### Cell_LINE_No = Read1.fastq,Read2.fastq
+31 = FSR14004-C01-125.R1.fastq,FSR14004-C01-125.R2.fastq
+32 = FSR14004-C02-131.R1.fastq,FSR14004-C02-131.R2.fastq
+33 = FSR14004-C03-126.R1.fastq,FSR14004-C03-126.R2.fastq
+34 = FSR14004-C04-132.R1.fastq,FSR14004-C04-132.R2.fastq
+35 = FSR14004-C05-127.R1.fastq,FSR14004-C05-127.R2.fastq
+36 = FSR14004-C06-133.R1.fastq,FSR14004-C06-133.R2.fastq
+37 = FSR14004-C07-128.R1.fastq,FSR14004-C07-128.R2.fastq
+38 = FSR14004-C08-134.R1.fastq,FSR14004-C08-134.R2.fastq
+39 = FSR14004-C09-129.R1.fastq,FSR14004-C09-129.R2.fastq
+40 = FSR14004-C10-135.R1.fastq,FSR14004-C10-135.R2.fastq
+41 = FSR14004-C11-130.R1.fastq,FSR14004-C11-130.R2.fastq
+42 = FSR14004-C12-136.R1.fastq,FSR14004-C12-136.R2.fastq
+
+[VECTORS]
+### Cell_Line_No = Vector.fasta
+31 = Construct.21119.fasta
+32 = Construct.21119.fasta
+33 = Construct.21119.fasta
+34 = Construct.21119.fasta
+35 = Construct.21119.fasta
+36 = Construct.21119.fasta
+37 = Construct.21119.fasta
+38 = Construct.21119.fasta
+39 = Construct.21119.fasta
+40 = Construct.21119.fasta
+41 = Construct.21119.fasta
+42 = Construct.21119.fasta

@@ -2,7 +2,7 @@
 use warnings;
 use strict;
 use FindBin;
-use lib "$FindBin::Bin/lib";
+use lib "$FindBin::Bin/Lib";
 
 use Tools;
 use Configuration;
@@ -40,11 +40,12 @@ sub worker {
 	my $TID=threads->tid() -1 ;
 	while(my$j=$q->dequeue_nb()){
 		my ($R1,$R2)=split(/\,/,$Config->get("DATA",$j));
-		my $P1=$Config->get("PATHS","data_dir")."/".$R1;
-		my $P2=$Config->get("PATHS","data_dir")."/".$R2;
-		my $outputDir = $Config->get("PATHS","output_dir")."/".$Config->get("CELL_LINE",$j);
+		my $P1=$Config->get("DIRECTORIES","data_dir")."/".$R1;
+		my $P2=$Config->get("DIRECTORIES","data_dir")."/".$R2;
+		my $outputDir = $Config->get("DIRECTORIES","output_dir")."/".$Config->get("CELL_LINE",$j);
+		mkdir $outputDir unless -e $outputDir;
 		my $samtools = $Config->get("PATHS","samtools");
-		my $bwaRef=$outputDir."/".$Config->get("CELL_LINE",$j).".ref.fasta";
+		my $bwaRef=$Config->get("DIRECTORIES","output_dir")."/".$Config->get("VECTORS",$j).".ref.fasta";
 		my $bwaRoot=$outputDir."/Alignments";
 		my $bwaAln=$bwaRoot.".bam";
 		my $cmd=$Config->get("PATHS","bwa")." mem -t $nThreads $bwaRef $P1 $P2 | $samtools view -bS - > $bwaAln";
