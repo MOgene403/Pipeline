@@ -47,6 +47,7 @@ sub workerThread{
 		my $bcftools	= $config->get("PATHS","bcftools");
 		my $snpRate	= $config->get("OPTIONS","snpRate");
 		my $minCov	= $config->get("OPTIONS","minCov");
+		my $ins 	= $config->get("INSERTS",$grp);
 		my @CurrentSourcePaths;
 		my @GarbageCollector;
 
@@ -69,45 +70,10 @@ sub workerThread{
 		$command = "$samtools index $BaseBam.sorted.bam";
 		warn $command."\n";
 		`$command`;
-		$command = "$samtools mpileup -F 0.00001 -g -C50 -d 10000000 -f $index $BaseBam.sorted.bam | $bcftools view -b -m 0.01 -p .99 - | $bcftools view - > $BaseBam.raw.vcf";
+		$command = "$samtools mpileup -r $ins -F 0.00001 -g -C50 -d 10000000 -f $index $BaseBam.sorted.bam | $bcftools view -b -m 0.01 -p .99 - | $bcftools view - > $BaseBam.raw.vcf";
 		warn $command."\n";
 		`$command`;
 		my %H = %{parseResults("$BaseBam.raw.vcf",$BaseBam.".filt.vcf",$snpRate,$minCov)};
-		my $Mres=generateMeacham($index,$BaseBam.".mch.tab",\%H);
-		if($Mres == 0){
-			warn $grp." did not generate any snps. Leaving files in place...\n";
-			next;
-		}
-		$command = "perl $mchScript $BaseBam.mch.tab $BaseBam.sam $BaseBam $mchScriptDir";
-		warn $command."\n";
-		`$command`;
-		push @GarbageCollector, $BaseBam.".mch.tab";
-		push @GarbageCollector, $BaseBam.".reads_parsed";
-		push @GarbageCollector, $BaseBam.".sys_errors.nn";
-		push @GarbageCollector, $BaseBam.".heterozygous.nn";
-		push @GarbageCollector, $BaseBam.".table_all";
-		push @GarbageCollector, $BaseBam.".table_chosen";
-		push @GarbageCollector, $BaseBam.".table_chosen.n";
-		push @GarbageCollector, $BaseBam.".table_chosen.nn";
-		push @GarbageCollector, $BaseBam.".filt.vcf";
-		push @GarbageCollector, $BaseBam.".fasta.raw.vcf";
-		my %bad=%{getSysErrors($BaseBam)};
-#			my $tmpFinal = $baseOutput.".final.vcf";
-		my $outBad   = $finalOutput.".sysErrors.vcf";			
-		my $outFinal = $finalOutput.".truePos.vcf";
-		my @outFinal;
-		my @outFiltered;
-		foreach my $key (keys %H){
-			my $K=$H{$key}{"Chr"}."-".$H{$key}{"Pos"};
-			if(defined($bad{$K})){
-				push @outFiltered, $H{$key}{"L"};
-			}else{
-#				push @outFinal, parseToFinal($H{$key}{"L"});
-				push @outFinal, $H{$key}{"L"};
-			}
-		}
-		Tools->printToFile($outFinal,\@outFinal);
-		Tools->printToFile($outBad,\@outFiltered);
 		collectTheGarbage(@GarbageCollector);
 	}
 }

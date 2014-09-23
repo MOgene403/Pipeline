@@ -50,6 +50,21 @@ temp_dir	= /home/ec2-user/Store1/Temp
 41 = FSR14004-C11-130.R1.fastq,FSR14004-C11-130.R2.fastq
 42 = FSR14004-C12-136.R1.fastq,FSR14004-C12-136.R2.fastq
 
+[INSERTS]
+### Cell_Line_No = Vector.fasta
+31 = 21119
+32 = 21119
+33 = 21119
+34 = 21119
+35 = 21119
+36 = 21119
+37 = 21119
+38 = 21119
+39 = 21119
+40 = 21119
+41 = 21119
+42 = 21119
+
 [VECTORS]
 ### Cell_Line_No = Vector.fasta
 31 = Construct.21119.fasta
