@@ -36,59 +36,15 @@ temp_dir	= /home/ec2-user/Store1/Temp
 [CELL_LINE]
 #### Cell_LINE_No = directory suffix (attached to output_dir)
 31 = FSR14004-C01-125
-32 = FSR14004-C02-131
-33 = FSR14004-C03-126
-34 = FSR14004-C04-132
-35 = FSR14004-C05-127
-36 = FSR14004-C06-133
-37 = FSR14004-C07-128
-38 = FSR14004-C08-134
-39 = FSR14004-C09-129
-40 = FSR14004-C10-135
-41 = FSR14004-C11-130
-42 = FSR14004-C12-136
 
 [DATA]
 ### Cell_LINE_No = Read1.fastq,Read2.fastq
 31 = FSR14004-C01-125.R1.fastq,FSR14004-C01-125.R2.fastq
-32 = FSR14004-C02-131.R1.fastq,FSR14004-C02-131.R2.fastq
-33 = FSR14004-C03-126.R1.fastq,FSR14004-C03-126.R2.fastq
-34 = FSR14004-C04-132.R1.fastq,FSR14004-C04-132.R2.fastq
-35 = FSR14004-C05-127.R1.fastq,FSR14004-C05-127.R2.fastq
-36 = FSR14004-C06-133.R1.fastq,FSR14004-C06-133.R2.fastq
-37 = FSR14004-C07-128.R1.fastq,FSR14004-C07-128.R2.fastq
-38 = FSR14004-C08-134.R1.fastq,FSR14004-C08-134.R2.fastq
-39 = FSR14004-C09-129.R1.fastq,FSR14004-C09-129.R2.fastq
-40 = FSR14004-C10-135.R1.fastq,FSR14004-C10-135.R2.fastq
-41 = FSR14004-C11-130.R1.fastq,FSR14004-C11-130.R2.fastq
-42 = FSR14004-C12-136.R1.fastq,FSR14004-C12-136.R2.fastq
 
 [INSERTS]
 ### Cell_Line_No = Vector.fasta
 31 = 21119
-32 = 21119
-33 = 21119
-34 = 21119
-35 = 21119
-36 = 21119
-37 = 21119
-38 = 21119
-39 = 21119
-40 = 21119
-41 = 21119
-42 = 21119
 
 [VECTORS]
 ### Cell_Line_No = Vector.fasta
 31 = Construct.21119.fasta
-32 = Construct.21119.fasta
-33 = Construct.21119.fasta
-34 = Construct.21119.fasta
-35 = Construct.21119.fasta
-36 = Construct.21119.fasta
-37 = Construct.21119.fasta
-38 = Construct.21119.fasta
-39 = Construct.21119.fasta
-40 = Construct.21119.fasta
-41 = Construct.21119.fasta
-42 = Construct.21119.fasta

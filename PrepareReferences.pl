@@ -19,7 +19,7 @@ my $nThreads = $Config->get("OPTIONS","Threads");
 
 warn "Recognizing $nThreads as max threading...\n";
 
-my $ref=$Config->get("DIRECTORIES","reference");
+my $ref=$Config->get("PATHS","reference");
 warn "Finding Vectors...\n";
 my $vecDir = $Config->get("DIRECTORIES","vector_dir");
 my @LineNo = $Config->getAll("VECTORS");

@@ -36,14 +36,20 @@ sub workerThread{
 	while(my $work=$q->dequeue_nb()){
 		my $grp		= $work;
 		my ($p1,$p2)=split(/\,/,$config->get("DATA",$grp));
-		my $DataDir 	= $config->get("DIRECTORIES","data_dir");
+		my $DataDir 	= $config->get("DIRECTORIES","filtered_dir");
 		my $OutDir  	= $config->get("DIRECTORIES","output_dir");
 		my $RefDir	= $config->get("DIRECTORIES","reference");
 		my $TempDir	= $config->get("DIRECTORIES","temp_dir");
 		checkDir($DataDir,$OutDir,$RefDir,$TempDir);
-		my $workThreads = $config->get("OPTIONS","Threads");
+		
+		my $outputDir 	= $config->get("DIRECTORIES","output_dir")."/".$config->get("CELL_LINE",$grp);
+		my $base 	= $config->get("CELL_LINE",$grp);
+		my $bwaRoot	= $outputDir."/$base.Alignments";
+		my $samtools 	= $config->get("PATHS","samtools");
 		my $bwa		= $config->get("PATHS","bwa");
-		my $samtools	= $config->get("PATHS","samtools");
+		my $bwaRef	= $config->get("DIRECTORIES","output_dir")."/".$config->get("VECTORS",$grp).".ref.fasta";
+
+		my $workThreads = $config->get("OPTIONS","Threads");
 		my $bcftools	= $config->get("PATHS","bcftools");
 		my $snpRate	= $config->get("OPTIONS","snpRate");
 		my $minCov	= $config->get("OPTIONS","minCov");
@@ -58,22 +64,10 @@ sub workerThread{
 
 		my $index = $OutDir."/".$config->get("VECTORS",$grp).".ref.fasta";
 
-		my $alias = $config->get("CELL_LINE",$grp);
-		my $BaseBam = $OutDir."/$alias/Alignments";
-		my $baseOutput = $TempDir."/".$alias;
-		my $finalOutput = $OutDir."/".$alias;
-
-		$alias =~ s/\..+//;
-		my $command = "$samtools sort -\@ $workThreads $BaseBam.bam $BaseBam.sorted";
+		my $command = "$samtools mpileup -r $ins -F 0.00001 -g -C50 -d 10000000 -f $index $bwaRoot.sorted.bam | $bcftools view -b -m 0.01 -p .99 - | $bcftools view - > $bwaRoot.raw.vcf";
 		warn $command."\n";
 		`$command`;
-		$command = "$samtools index $BaseBam.sorted.bam";
-		warn $command."\n";
-		`$command`;
-		$command = "$samtools mpileup -r $ins -F 0.00001 -g -C50 -d 10000000 -f $index $BaseBam.sorted.bam | $bcftools view -b -m 0.01 -p .99 - | $bcftools view - > $BaseBam.raw.vcf";
-		warn $command."\n";
-		`$command`;
-		my %H = %{parseResults("$BaseBam.raw.vcf",$BaseBam.".filt.vcf",$snpRate,$minCov)};
+		my %H = %{parseResults("$bwaRoot.raw.vcf",$bwaRoot.".filt.vcf",$snpRate,$minCov)};
 		collectTheGarbage(@GarbageCollector);
 	}
 }

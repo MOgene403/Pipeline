@@ -15,7 +15,7 @@ die "usage : perl $0 <config file governing all filtering>\n\n" unless $#ARGV==0
 my $q = Thread::Queue->new();
 my $config = Configuration->new($configFile);
 my $threads = $config->get("OPTIONS","Threads");
-my @Groups = $config->getAll("GROUPS");
+my @Groups = $config->getAll("DATA");
 
 for(my $i=0;$i<=$#Groups;$i++){
 	warn "enqueuing $i ($Groups[$i])\n";
@@ -34,27 +34,36 @@ while(threads->list()>0){
 sub workerThread{
 	while(my $work=$q->dequeue_nb()){
 		my $grp=$work;
-		my $DataDir = $config->get("DIRECTORIES","Data");
-		my $OutDir  = $config->get("DIRECTORIES","Output");
+		my $DataDir = $config->get("DIRECTORIES","data_dir");
+		my $OutDir  = $config->get("DIRECTORIES","output_dir");
+		my $FiltDir = $config->get("DIRECTORIES","filtered_dir");
 		my $workThreads = $config->get("OPTIONS","workThreads");
+		my $base = $config->get("CELL_LINE",$grp);
 		my @CurrentSourcePaths;
 		my @GarbageCollector;
 		my $dir=$DataDir;
 		warn "Working with $dir...\n";
-		my @CurrentFiles = split(/\,/,$config->get("GROUPS",$grp));
+		#my @CurrentFiles = split(/\,/,$config->get("DATA",$grp));
+		opendir(DIR,$dir) || die "cannot open directory : $dir \n";
+		my @CurrentFiles = grep {m/$base/} readdir DIR;
+		closedir DIR;
 		map {push @CurrentSourcePaths, $dir."/".$_} @CurrentFiles;
+		warn "working with $grp\n";
 		if($config->get("PIPELINE","Compressed")){
 			warn "Treating files as compressed.\n";
 			my @thisSet = @CurrentSourcePaths;
 			@CurrentSourcePaths=();
 			foreach my $file (@thisSet){
-				die "file: $file is not a gzipped file.\n" unless $file=~m/\.gz$/;
-				my $nPath=$file;
-				$nPath=~s/\.gz//;
-				my $command = "gunzip ".$file;
-				warn $command."\n";
-				`$command`;
-				push @CurrentSourcePaths, $nPath;
+				if($file=~m/gz$/){
+					my $nPath=$file;
+					$nPath=~s/\.gz//;
+					my $command = "gunzip ".$file;
+					warn $command."\n";
+					`$command`;
+					push @CurrentSourcePaths, $nPath;
+				}else{
+					push @CurrentSourcePaths, $file;
+				}
 #				push @GarbageCollector, $nPath;
 			}	
 		}
@@ -115,8 +124,14 @@ sub workerThread{
 			my $OR1=$DataDir."/$grp".".R1.fastq";
 			my $OR2=$DataDir."/$grp".".R2.fastq";
 			my $ORO=$DataDir."/$grp".".orphan.fastq";
+			my $FR1=$FiltDir."/$base".".R1.fastq";
+			my $FR2=$FiltDir."/$base".".R2.fastq";
 			$command="perl $script $T1 $T2 $O";
 			warn $command."\n";
+			`$command`;
+			$command = "mv $OR1 $FR1";
+			`$command`;
+			$command = "mv $OR2 $FR2";
 			`$command`;
 			push @GarbageCollector, $OR1;
 			push @GarbageCollector, $OR2;
