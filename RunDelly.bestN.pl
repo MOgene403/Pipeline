@@ -63,8 +63,8 @@ sub worker {
 		}
 		my $bk=$bkf.".$job.$j";
 		hdpTools->printToFile($bk,\@badkeys);
-		my $outputDir = $Config->get("DIRECTORIES","output_dir")."/VCFs";
-		my $base = $Config->get("CELL_LINE",$j);
+		my $outputDir 	= $Config->get("DIRECTORIES","output_dir")."/".$Config->get("CELL_LINE",$job);
+		my $base 	= $Config->get("CELL_LINE",$job);
 		my $tfileR=$outputDir."/".$base.".".$key;
 		print $tfileR."\n";
 		$tfileR=~s/\|/-/g;
@@ -73,18 +73,18 @@ sub worker {
 		my $cmd=$delly." -t TRA -o $tfile -q 30 -x $bk $PE";
 		warn $cmd."\n";
 		`$cmd`;
-		$tfile=$tfileR.".DEL.vcf";
-		$cmd=$delly." -t DEL -o $tfile -q 30 -x $bk $PE";
-		warn $cmd."\n";
-		`$cmd`;
-		$tfile=$tfileR.".DUP.vcf";
-		$cmd=$delly." -t DUP -o $tfile -q 30 -x $bk $PE";
-		warn $cmd."\n";
-		`$cmd`;
-		$tfile=$tfileR.".INV.vcf";
-		$cmd=$delly." -t INV -o $tfile -q 30 -x $bk $PE";
-		warn $cmd."\n";
-		`$cmd`;
+		#$tfile=$tfileR.".DEL.vcf";
+		#$cmd=$delly." -t DEL -o $tfile -q 30 -x $bk $PE";
+		#warn $cmd."\n";
+		#`$cmd`;
+		#$tfile=$tfileR.".DUP.vcf";
+		#$cmd=$delly." -t DUP -o $tfile -q 30 -x $bk $PE";
+		#warn $cmd."\n";
+		#`$cmd`;
+		#$tfile=$tfileR.".INV.vcf";
+		#$cmd=$delly." -t INV -o $tfile -q 30 -x $bk $PE";
+		#warn $cmd."\n";
+		#`$cmd`;
 	}
 }
 

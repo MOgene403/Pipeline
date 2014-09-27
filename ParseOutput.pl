@@ -14,29 +14,48 @@ use Thread::Queue;
 die "usage: perl $0 <Config file>\n\n" unless $#ARGV==0;
 my $Config = Configuration->new($ARGV[0]);
 
-my $ref=$Config->get("PATHS","reference_dir");
 warn "Finding Vectors...\n";
-my $vecDir = $Config->get("DIRECTORIES","vector_dir");
-my @Lines = $Config->getAll("INSERTS");
-my $VCFdir = $Config->get("DIRECTORIES","output_dir")."/VCFs";
+my $DataDir 	= $Config->get("DIRECTORIES","filtered_dir");
+my $OutDir  	= $Config->get("DIRECTORIES","output_dir");
+my $RefDir	= $Config->get("DIRECTORIES","reference");
+my $TempDir	= $Config->get("DIRECTORIES","temp_dir");
+my $vecDir 	= $Config->get("DIRECTORIES","vector_dir");
+my $samtools 	= $Config->get("PATHS","samtools");
+my $bwa		= $Config->get("PATHS","bwa");
+my $snpRate	= $Config->get("OPTIONS","snpRate");
+my $minCov	= $Config->get("OPTIONS","minCov");
 
-opendir(VCF,$VCFdir) || die "cannot open directory: $VCFdir!\n$!\nexiting...\n";
-my @files=grep {m/vcf$/} readdir VCF;
-closedir VCF;
+my @Lines = $Config->getAll("CELL_LINE");
 
-our %Fasta;
-foreach my $line (@Lines){
-	warn "parsing $line...\n";
-	my $ref=$Config->get("DIRECTORIES","output_dir")."/".$Config->get("VECTORS",$line).".ref.fasta";
-	%Fasta = %{Tools->LoadFasta($ref)};
-	my $j = $line;
-	my $insert = $Config->get("INSERTS",$line);
-	my @files = grep {m/$line/} @files;
-	print "\n";
-#	print join("\n",@files)."\n";
+our %AFasta;
+foreach my $grp (@Lines){
+	my $vector = $Config->get("VECTORS",$grp);
+	my $bwaRef = $OutDir."/".$vector.".ref.fasta";
+	if(defined($AFasta{$vector})){
+	}else{
+		warn "Parsing $bwaRef\n";
+		$AFasta{$vector}=Tools->LoadFasta($bwaRef);
+	}
+}
+
+
+foreach my $grp (@Lines){
+	my $bwaRef	= $OutDir."/".$Config->get("VECTORS",$grp).".ref.fasta";
+	my $base 	= $Config->get("CELL_LINE",$grp);
+	my $vector 	= $Config->get("VECTORS",$grp);
+	my $outputDir 	= $OutDir."/".$base;
+	my $bwaRoot	= $outputDir."/$base.Alignments";
+	my $ins 	= $Config->get("INSERTS",$grp);
+
+	opendir(VCF,$outputDir) || die "cannot open directory: $outputDir!\n$!\nexiting...\n";
+	my @files=grep {m/vcf$/} readdir VCF;
+	closedir VCF;
+	my $j = $grp;
+	my $insert = $Config->get("INSERTS",$grp);
 	my %hash;
 	foreach my $file (@files){
-		my $path = $VCFdir."/".$file;
+		my $path = $outputDir."/".$file;
+		warn $path."\n";
 		my @file = @{Tools->LoadFile($path)};
 		foreach my $line (@file){
 			next if $line=~m/^\#/;
@@ -50,13 +69,14 @@ foreach my $line (@Lines){
 		}
 	}
 	my @k = keys %hash;
-	parseVCFtoCSV(\%hash,$j);	
+	parseVCFtoCSV(\%hash,$j,$vector);	
 }
 
 
 sub parseVCFtoCSV {
 	my %R = %{$_[0]};
 	my $j=$_[1];
+	my $vector = $_[2];
 	print "Source Sample,Contig A,A_coordinate,Type,Contig B,B_coordinate,Length,Orientation,NumReads,Segment A,Segment B\n";
 	foreach my $key (keys %R){
 		my $line=$R{$key};
@@ -69,7 +89,7 @@ sub parseVCFtoCSV {
 		$nLine .= ",".$info{SVLEN};
 		$nLine .= ",".$info{CT};
 		$nLine .= ",".$info{PE};
-		my ($segA,$segB)=split(/\,/,getSegment($line[2],$line[0],$line[1],$info{END},$info{CHR2},$info{CT}));
+		my ($segA,$segB)=split(/\,/,getSegment($line[2],$line[0],$line[1],$info{END},$info{CHR2},$info{CT},$vector));
 		$nLine .=",".$segA;
 		$nLine .=",".$segB;
 		print $nLine."\n";
@@ -83,6 +103,8 @@ sub getSegment {
 	my $coordB = shift;
 	my $chrB = shift;
 	my $ct = shift;
+	my $vector = shift;
+	my %Fasta=%{$AFasta{$vector}};
 	my $segmentA="";
 	my $segmentB="";
 	if($type=~m/TRA/i){
@@ -138,7 +160,28 @@ sub parseInfo {
 		my ($k,$v)=split(/\=/,$i);
 		$H{$k}=$v;
 	}
-	check(\%H,$line);
+#SNP VCF
+#21119   15862   .       A       X       0       .       DP=70;I16=0,70,0,0,2294,77842,0,0,3405,168105,0,0,237,1779,0,0;QS=1.000000,0.000000,0.000000,0.000000       PL      0,211,216
+#21119   15863   .       A       X       0       .       DP=42;I16=0,42,0,0,1504,54694,0,0,2024,99644,0,0,195,1347,0,0;QS=1.000000,0.000000,0.000000,0.000000        PL      0,126,206
+#21119   15864   .       T       X       0       .       DP=42;I16=0,42,0,0,1412,49384,0,0,2024,99644,0,0,153,999,0,0;QS=1.000000,0.000000,0.000000,0.000000 PL      0,126,203
+#21119   15865   .       A       X       0       .       DP=39;I16=0,39,0,0,1339,47855,0,0,1874,92144,0,0,114,732,0,0;QS=1.000000,0.000000,0.000000,0.000000 PL      0,117,203
+#21119   15866   .       T       X       0       .       DP=39;I16=0,39,0,0,1343,47799,0,0,1874,92144,0,0,75,543,0,0;QS=1.000000,0.000000,0.000000,0.000000  PL      0,117,203
+#
+#
+#TRA VCF (delly) :
+#21119   132     TRA00000002     N       <TRA>   .       PASS    IMPRECISE;CIEND=-487,487;CIPOS=-487,487;SVTYPE=TRA;SVMETHOD=EMBL.DELLYv0.5.4;CHR2=3;END=18639948;SVLEN=0;CT=5to5;PE=93;MAPQ=60      GT:GL:GQ:FT:RC:DR:DV:RR:RV      1/1:-550.988,-30.9945,0:310:PASS:0:0:103:0:0
+#21119   132     TRA00000001     N       <TRA>   .       PASS    IMPRECISE;CIEND=-584,584;CIPOS=-584,584;SVTYPE=TRA;SVMETHOD=EMBL.DELLYv0.5.4;CHR2=3;END=39196983;SVLEN=0;CT=5to3;PE=6;MAPQ=43       GT:GL:GQ:FT:RC:DR:DV:RR:RV      1/1:-550.988,-30.9945,0:310:PASS:0:0:103:0:0
+#21119   15835   TRA00000003     N       <TRA>   .       LowQual IMPRECISE;CIEND=-486,486;CIPOS=-486,486;SVTYPE=TRA;SVMETHOD=EMBL.DELLYv0.5.4;CHR2=3;END=18639996;SVLEN=0;CT=3to3;PE=2;MAPQ=45       GT:GL:GQ:FT:RC:DR:DV:RR:RV      1/1:-10.5972,-0.900273,0:9:LowQual:0:0:3:0:0
+#
+	$H{CHR2}="NA" unless defined $H{CHR2};
+	$H{END}="NA" unless defined $H{END};
+	$H{SVLEN}="0" unless defined $H{SVLEN};
+	$H{CT}="0" unless defined $H{CT};
+	if(defined($H{DP})){
+		$H{PE} = $H{DP};
+	}
+	$H{PE}="0" unless defined $H{PE};
+	#check(\%H,$line);
 	return \%H;
 }
 
