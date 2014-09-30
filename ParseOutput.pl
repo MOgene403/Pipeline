@@ -46,7 +46,7 @@ foreach my $grp (@Lines){
 	my $outputDir 	= $OutDir."/".$base;
 	my $bwaRoot	= $outputDir."/$base.Alignments";
 	my $ins 	= $Config->get("INSERTS",$grp);
-
+	my $OFile = $outputDir."/".$base.".csv";
 	opendir(VCF,$outputDir) || die "cannot open directory: $outputDir!\n$!\nexiting...\n";
 	my @files=grep {m/vcf$/} readdir VCF;
 	closedir VCF;
@@ -69,7 +69,7 @@ foreach my $grp (@Lines){
 		}
 	}
 	my @k = keys %hash;
-	parseVCFtoCSV(\%hash,$j,$vector);	
+	parseVCFtoCSV(\%hash,$j,$vector,$OFile,$base);	
 }
 
 
@@ -77,23 +77,69 @@ sub parseVCFtoCSV {
 	my %R = %{$_[0]};
 	my $j=$_[1];
 	my $vector = $_[2];
-	print "Source Sample,Contig A,A_coordinate,Type,Contig B,B_coordinate,Length,Orientation,NumReads,Segment A,Segment B\n";
+	my $File=$_[3];
+	my $base = $_[4];
+	my @O;
+	push @O, "Source Sample,Contig A,A_coordinate,Type,Contig B,B_coordinate,Length,Orientation,NumReads,Segment A,Segment B\n";
 	foreach my $key (keys %R){
 		my $line=$R{$key};
 		my @line=split(/\t/,$line);
 		my %info = %{parseInfo($line[7],$line)};
 		$line[2] =~ s/\d+//;
-		my $nLine = $j.",".$line[0].",".$line[1].",".$line[2];
-		$nLine .= ",".$info{CHR2};
-		$nLine .= ",".$info{END};
-		$nLine .= ",".$info{SVLEN};
-		$nLine .= ",".$info{CT};
-		$nLine .= ",".$info{PE};
-		my ($segA,$segB)=split(/\,/,getSegment($line[2],$line[0],$line[1],$info{END},$info{CHR2},$info{CT},$vector));
-		$nLine .=",".$segA;
-		$nLine .=",".$segB;
-		print $nLine."\n";
+		my $nLine = $base.",".$line[0].",".$line[1];
+		if(defined($info{I16})){
+			if(my $cons=_checkI16($line[3],$line[4],\%info,$snpRate,$minCov)){
+				$nLine .= ",SNP";
+				$nLine .= ",NA";
+				$nLine .= ",NA";
+				$nLine .= ",NA";
+				$nLine .= ",NA";
+				$nLine .= ",$cons";
+				push @O, $nLine;
+			}
+		}else{
+			$nLine .= ",".$line[2];
+			$nLine .= ",".$info{CHR2};
+			$nLine .= ",".$info{END};
+			$nLine .= ",".$info{SVLEN};
+			$nLine .= ",".$info{CT};
+			$nLine .= ",".$info{PE};
+			my ($segA,$segB)=split(/\,/,getSegment($line[2],$line[0],$line[1],$info{END},$info{CHR2},$info{CT},$vector,200));
+			$nLine .=",".$segA;
+			$nLine .=",".$segB;
+			push @O, $nLine;
+		}
 	}
+	Tools->printToFile($File,\@O);
+}
+
+sub _checkI16 {
+	my $cons = shift;
+	my $Alts = shift;
+	my %Info = %{$_[0]};
+	my $rate = $_[1];
+	my $min = $_[2];
+	my $I16 = $Info{I16};
+	my $QS  = $Info{QS};
+	my @Alt = split(/\,/,$Alts);
+	unshift @Alt, $cons;
+	my @QS  = split(/\,/,$QS);
+	my @I16=split(/\,/,$I16);
+	if(($I16[0] == 0) && ($I16[1] == 0) && ($I16[2] == 0) && ($I16[3] ==0 )){
+		return undef;
+	}
+	my $ret = "";
+	my $freq = "";
+	my $p=0;
+	for(my $i=0;$i<=$#Alt;$i++){
+		if($QS[$i] > $rate) {
+			$ret.=",".$Alt[$i];
+			$freq.= ",".$QS[$i];
+			$p+=1;
+		}
+	}
+	return $ret.",".$freq if $p > 1;
+	return undef;
 }
 
 sub getSegment { 
@@ -104,28 +150,62 @@ sub getSegment {
 	my $chrB = shift;
 	my $ct = shift;
 	my $vector = shift;
+	my $N = shift;
 	my %Fasta=%{$AFasta{$vector}};
 	my $segmentA="";
 	my $segmentB="";
 	if($type=~m/TRA/i){
-		if(defined($Fasta{$chrA})){
-			my $start = $coordA - 100;
-			$start =0  if $start < 0;
-			my $length = 200;
+		if($ct eq "5to5"){
+## get first N coordinates of Chr A upstream of at Pos A, and first N coordinates of Chr B starting after Pos B
+			my $start = $coordA - $N;
+			$start = 0 if $start < 0;
+			my $length = $N;
 			$length = length($Fasta{$chrA}) - $coordA if ($length+$coordA)>length($Fasta{$chrA});
 			$segmentA = substr($Fasta{$chrA},$start,$length);
-		}else{
-			die "cannot find chromosome $chrA!\n";
-		}
-		if(defined($Fasta{$chrB})){
-			my $start = $coordB - 100;
-			$start =0  if $start < 0;
-			my $length = 200;
+			$segmentA = Tools->revcomp($segmentA);
+			$start = $coordB;
+			$length = $N;
+			$length = length($Fasta{$chrB}) - $coordB if ($length+$coordB)>length($Fasta{$chrB});
+			$segmentB = substr($Fasta{$chrB},$start,$length);
+		}elsif($ct eq "5to3"){
+## Get first N nucleotides after A in ChrA, get first N nucleotides before B in chr B
+			my $start = $coordA;
+			my $length = $N;
+			$length = length($Fasta{$chrA}) - $coordA if ($length+$coordA)>length($Fasta{$chrA});
+			$segmentA = substr($Fasta{$chrA},$start,$length);
+			$start = $coordB-$N;
+			$start = 0 if $start < 0;
+			$length = $N;
+			$length = length($Fasta{$chrB}) - $coordB if ($length+$coordB)>length($Fasta{$chrB});
+			$segmentB = substr($Fasta{$chrB},$start,$length);
+		}elsif($ct eq "3to5"){
+## get first N nucleotides before A in ChrA, get first N nucleotides after B in Chr B
+			my $start = $coordA-$N;
+			$start = 0 if $start < 0;
+			my $length = $N;
+			$length = length($Fasta{$chrA}) - $coordA if ($length+$coordA)>length($Fasta{$chrA});
+			$segmentA = substr($Fasta{$chrA},$start,$length);
+			$start = $coordB;
+			$length = $N;
+			$length = length($Fasta{$chrB}) - $coordB if ($length+$coordB)>length($Fasta{$chrB});
+			$segmentB = substr($Fasta{$chrB},$start,$length);
+		}elsif($ct eq "3to3"){
+## get revcomp of the first N nucleotides upstream of A in Chr A, get N nucleotides upstream of B in Chr B
+			my $start = $coordA - $N;
+			$start = 0 if $start < 0;
+			my $length = $N;
+			$length = length($Fasta{$chrA}) - $coordA if ($length+$coordA)>length($Fasta{$chrA});
+			$segmentA = substr($Fasta{$chrA},$start,$length);
+			$segmentA = Tools->revcomp($segmentA);
+			$start = $coordB-$N;
+			$start = 0 if $start < 0;
+			$length = $N;
 			$length = length($Fasta{$chrB}) - $coordB if ($length+$coordB)>length($Fasta{$chrB});
 			$segmentB = substr($Fasta{$chrB},$start,$length);
 		}else{
-			die "cannot find chromosome $chrA!\n";
 		}
+		$segmentA = lc($segmentA);
+		$segmentB = uc($segmentB);
 	}elsif($type=~m/DEL/i){
 		if(defined($Fasta{$chrA})){
 			my $start = $coordA - 100;
