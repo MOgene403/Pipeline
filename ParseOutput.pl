@@ -80,7 +80,7 @@ sub parseVCFtoCSV {
 	my $File=$_[3];
 	my $base = $_[4];
 	my @O;
-	push @O, "Source Sample,Contig A,A_coordinate,Type,Contig B,B_coordinate,Length,Orientation,NumReads,Segment A,Segment B\n";
+	push @O, "Source Sample,Contig A,A_coordinate,Type,Contig B,B_coordinate,Orientation,NumReads,Sequence,(SNP) Ref Base,(SNP) Alt Base, (SNP) Ref Ratio, (SNP) Alt Ratio";
 	foreach my $key (keys %R){
 		my $line=$R{$key};
 		my @line=split(/\t/,$line);
@@ -93,7 +93,7 @@ sub parseVCFtoCSV {
 				$nLine .= ",NA";
 				$nLine .= ",NA";
 				$nLine .= ",NA";
-				$nLine .= ",NA";
+				$nLine .= ",".$info{DP};
 				$nLine .= ",$cons";
 				push @O, $nLine;
 			}
@@ -101,15 +101,14 @@ sub parseVCFtoCSV {
 			$nLine .= ",".$line[2];
 			$nLine .= ",".$info{CHR2};
 			$nLine .= ",".$info{END};
-			$nLine .= ",".$info{SVLEN};
 			$nLine .= ",".$info{CT};
 			$nLine .= ",".$info{PE};
-			my ($segA,$segB)=split(/\,/,getSegment($line[2],$line[0],$line[1],$info{END},$info{CHR2},$info{CT},$vector,200));
-			$nLine .=",".$segA;
-			$nLine .=",".$segB;
+			my $sequence=getSegment($line[2],$line[0],$line[1],$info{END},$info{CHR2},$info{CT},$vector,200);
+			$nLine .=",".$sequence;
 			push @O, $nLine;
 		}
 	}
+	push @O, "\n";
 	Tools->printToFile($File,\@O);
 }
 
@@ -154,9 +153,10 @@ sub getSegment {
 	my %Fasta=%{$AFasta{$vector}};
 	my $segmentA="";
 	my $segmentB="";
+	my $seq="";
 	if($type=~m/TRA/i){
 		if($ct eq "5to5"){
-## get first N coordinates of Chr A upstream of at Pos A, and first N coordinates of Chr B starting after Pos B
+			## get first N coordinates of Chr A upstream of at Pos A, and first N coordinates of Chr B starting after Pos B
 			my $start = $coordA - $N;
 			$start = 0 if $start < 0;
 			my $length = $N;
@@ -167,8 +167,11 @@ sub getSegment {
 			$length = $N;
 			$length = length($Fasta{$chrB}) - $coordB if ($length+$coordB)>length($Fasta{$chrB});
 			$segmentB = substr($Fasta{$chrB},$start,$length);
+			$segmentA = lc($segmentA);
+			$segmentB = uc($segmentB);
+			$seq = $segmentA.$segmentB;
 		}elsif($ct eq "5to3"){
-## Get first N nucleotides after A in ChrA, get first N nucleotides before B in chr B
+			## Get first N nucleotides after A in ChrA, get first N nucleotides before B in chr B
 			my $start = $coordA;
 			my $length = $N;
 			$length = length($Fasta{$chrA}) - $coordA if ($length+$coordA)>length($Fasta{$chrA});
@@ -178,8 +181,11 @@ sub getSegment {
 			$length = $N;
 			$length = length($Fasta{$chrB}) - $coordB if ($length+$coordB)>length($Fasta{$chrB});
 			$segmentB = substr($Fasta{$chrB},$start,$length);
+			$segmentA = lc($segmentA);
+			$segmentB = uc($segmentB);
+			$seq = $segmentB.$segmentA;
 		}elsif($ct eq "3to5"){
-## get first N nucleotides before A in ChrA, get first N nucleotides after B in Chr B
+			## get first N nucleotides before A in ChrA, get first N nucleotides after B in Chr B
 			my $start = $coordA-$N;
 			$start = 0 if $start < 0;
 			my $length = $N;
@@ -189,8 +195,11 @@ sub getSegment {
 			$length = $N;
 			$length = length($Fasta{$chrB}) - $coordB if ($length+$coordB)>length($Fasta{$chrB});
 			$segmentB = substr($Fasta{$chrB},$start,$length);
+			$segmentA = lc($segmentA);
+			$segmentB = uc($segmentB);
+			$seq=$segmentA.$segmentB;
 		}elsif($ct eq "3to3"){
-## get revcomp of the first N nucleotides upstream of A in Chr A, get N nucleotides upstream of B in Chr B
+			## get revcomp of the first N nucleotides upstream of A in Chr A, get N nucleotides upstream of B in Chr B
 			my $start = $coordA - $N;
 			$start = 0 if $start < 0;
 			my $length = $N;
@@ -202,31 +211,15 @@ sub getSegment {
 			$length = $N;
 			$length = length($Fasta{$chrB}) - $coordB if ($length+$coordB)>length($Fasta{$chrB});
 			$segmentB = substr($Fasta{$chrB},$start,$length);
+			$segmentA = lc($segmentA);
+			$segmentB = uc($segmentB);
+			$seq=$segmentB.$segmentA;
 		}else{
 		}
-		$segmentA = lc($segmentA);
-		$segmentB = uc($segmentB);
 	}elsif($type=~m/DEL/i){
-		if(defined($Fasta{$chrA})){
-			my $start = $coordA - 100;
-			$start =0  if $start < 0;
-			my $length = 200;
-			$length = length($Fasta{$chrA}) - $coordA if ($length+$coordA)>length($Fasta{$chrA});
-			$segmentA = substr($Fasta{$chrA},$start,$length);
-		}else{
-			die "cannot find chromosome $chrA!\n";
-		}
-		if((abs($coordB-$coordA))>200){
-			my $start = $coordB - 100;
-			$start =0  if $start < 0;
-			my $length = 200;
-			$length = length($Fasta{$chrA}) - $coordA if ($length+$coordA)>length($Fasta{$chrA});
-			$segmentB = substr($Fasta{$chrA},$start,$length);
-			
-		}
 	}else{
 	}
-	return $segmentA.",".$segmentB;
+	return $seq;
 
 }
 
