@@ -43,20 +43,28 @@ sub worker {
 		my $prefix = $Config->get("CELL_LINE",$j);
 		my $P1=$Config->get("DIRECTORIES","filtered_dir")."/".$prefix.".R1.fastq";
 		my $P2=$Config->get("DIRECTORIES","filtered_dir")."/".$prefix.".R2.fastq";
-		my $cmd = "wc -l $P1";
-		open(CMD,"-|",$cmd);
-		my @output = <CMD>;
-		close CMD;
-		my $num = $output[0];
-		$num=~s/\s+.+//;
-		$cmd = "wc -l $P2";
-		open(CMD,"-|",$cmd);
-		@output = <CMD>;
-		$output[0]=~s/\s+.+//;
-		close CMD;
-		$num+=$output[0];
-		$num=$num/4;
-		print $prefix."\t".$num."\n";
+		
+		my $outputDir = $Config->get("DIRECTORIES","output_dir")."/".$Config->get("CELL_LINE",$j);
+		my $base = $Config->get("CELL_LINE",$j);
+		my $bwaRoot=$outputDir."/$base.Alignments";
+		my $samtools = $Config->get("PATHS","samtools");
+		my $bwaRef=$Config->get("DIRECTORIES","output_dir")."/".$Config->get("VECTORS",$j).".ref.fasta";
+
+		mkdir $outputDir unless -e $outputDir;
+		
+		my $bwaAln=$bwaRoot.".bam";
+		my $cmd=$Config->get("PATHS","bwa")." mem -t $nThreads $bwaRef $P1 $P2 | $samtools view -bS - > $bwaAln";
+		warn $cmd."\n";
+		`$cmd`;
+		my $sorted=$bwaRoot.".sorted";
+		$cmd = $samtools." sort $bwaAln $sorted";
+		`$cmd`;
+		$cmd = $samtools." index ".$sorted.".bam";
+		`$cmd`;
+		my $depthscript = $Config->get("PATHS","depthScript");
+		my $depthout	= $outputDir."/ContigDepths.txt";
+		$cmd = $samtools." depth ".$sorted.".bam | perl $depthscript > $outputDir/$base.ContigDepths.txt";
+		`$cmd`;
 	}
 }
 

@@ -21,13 +21,18 @@ warn "Recognizing $nThreads as max threading...\n";
 
 my $ref=$Config->get("PATHS","reference");
 warn "Finding Vectors...\n";
-my $vecDir = $Config->get("PATHS","vector_dir");
+my $vecDir = $Config->get("DIRECTORIES","vector_dir");
 my @LineNo = $Config->getAll("VECTORS");
-
-foreach my $i (@LineNo){
-      $q->enqueue($i);
+my %files;
+foreach my $num (@LineNo){
+	my $file = $Config->get("VECTORS",$num);
+	$files{$file}=$num;
 }
-for(my$i=0;$i<1;$i++){
+
+foreach my $i (keys %files){
+      $q->enqueue($files{$i});
+}
+for(my$i=0;$i<$nThreads;$i++){
       my $thr=threads->create(\&worker);
 }
 while(threads->list()>0){
@@ -39,24 +44,16 @@ while(threads->list()>0){
 sub worker {
 	my $TID=threads->tid() -1 ;
 	while(my$j=$q->dequeue_nb()){
-		my ($R1,$R2)=split(/\,/,$Config->get("DATA",$j));
-		my $prefix = $Config->get("CELL_LINE",$j);
-		my $P1=$Config->get("DIRECTORIES","filtered_dir")."/".$prefix.".R1.fastq";
-		my $P2=$Config->get("DIRECTORIES","filtered_dir")."/".$prefix.".R2.fastq";
-		my $cmd = "wc -l $P1";
-		open(CMD,"-|",$cmd);
-		my @output = <CMD>;
-		close CMD;
-		my $num = $output[0];
-		$num=~s/\s+.+//;
-		$cmd = "wc -l $P2";
-		open(CMD,"-|",$cmd);
-		@output = <CMD>;
-		$output[0]=~s/\s+.+//;
-		close CMD;
-		$num+=$output[0];
-		$num=$num/4;
-		print $prefix."\t".$num."\n";
+		my $path=$Config->get("DIRECTORIES","vector_dir")."/".$Config->get("VECTORS",$j);
+		my $outputDir = $Config->get("DIRECTORIES","output_dir");
+### Prepare References
+		my $file=$outputDir."/".$Config->get("VECTORS",$j).".ref.fasta";
+		my $cmd="cat $ref $path > $file";
+		warn $cmd."\n";	
+		`$cmd`;
+		$cmd=$Config->get("PATHS","bwa")." index $file";
+		warn $cmd."\n";
+		`$cmd`;
 	}
 }
 

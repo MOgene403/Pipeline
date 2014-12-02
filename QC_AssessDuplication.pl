@@ -60,7 +60,7 @@ sub worker {
 		open(CMD,"-|",$command) || die "cannot run $command\n";
 		my @output = <CMD>;
 		close CMD;
-		warn $command."\n";
+		#warn $command."\n";
 		my %A;
 		foreach my $line (@output){
 			my @line = split(/\t/,$line);
@@ -83,7 +83,7 @@ sub worker {
 				}
 			}
 		}
-		warn "for library $base, $rep repeated hits, $sin single hits\n";
+		print "$base\t$sin\t$rep\n";
 	}
 }
 
