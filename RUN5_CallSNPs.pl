@@ -35,7 +35,9 @@ while(threads->list()>0){
 sub workerThread{
 	while(my $work=$q->dequeue_nb()){
 		my $grp		= $work;
-		my ($p1,$p2)=split(/\,/,$config->get("DATA",$grp));
+		my $base 	= $config->get("CELL_LINE",$grp);
+		my $p1		= $base.".R1.fastq";
+		my $p2		= $base.".R2.fastq";
 		my $DataDir 	= $config->get("DIRECTORIES","filtered_dir");
 		my $OutDir  	= $config->get("DIRECTORIES","output_dir");
 		my $RefDir	= $config->get("DIRECTORIES","reference");
@@ -43,7 +45,6 @@ sub workerThread{
 		checkDir($DataDir,$OutDir,$RefDir,$TempDir);
 		
 		my $outputDir 	= $config->get("DIRECTORIES","output_dir")."/".$config->get("CELL_LINE",$grp);
-		my $base 	= $config->get("CELL_LINE",$grp);
 		my $bwaRoot	= $outputDir."/$base.Alignments";
 		my $samtools 	= $config->get("PATHS","samtools");
 		my $bwa		= $config->get("PATHS","bwa");
