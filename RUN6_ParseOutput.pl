@@ -38,18 +38,25 @@ foreach my $grp (@Lines){
 	}
 }
 
+our @OUTPUT;
+our @FS;
+my $outputDir	= $OutDir."/VCFs";	
+my $lbfs = $outputDir."/FS.fasta.txt";
+my $output = $outputDir."/SNPs.csv";
 
 foreach my $grp (@Lines){
 	my $bwaRef	= $OutDir."/".$Config->get("VECTORS",$grp).".ref.fasta";
 	my $exclusions	=$Config->get("DIRECTORIES","vector_dir")."/".$Config->get("VECTORS",$grp).".exclusions.tab";
-	my %E = %{_LoadExclusions($exclusions,200,500)};
+	my %E = %{_LoadExclusions($exclusions,200,1000)};
 	my $base 	= $Config->get("CELL_LINE",$grp);
+	my $nk 		= $base;
+	$nk 		=~ s/\_S\d+//;
+	my $out 	= $Config->get("OUTPUT",$nk);
+	my $OFile = "does not matter\n";
 	my $vector 	= $Config->get("VECTORS",$grp);
 	my $inputDir	= $OutDir."/".$base;
-	my $outputDir	= $OutDir."/VCFs";	
 	my $bwaRoot	= $outputDir."/$base.Alignments";
 	my $ins 	= $Config->get("INSERTS",$grp);
-	my $OFile = $outputDir."/".$base.".csv";
 	opendir(VCF,$inputDir) || die "cannot open directory: $outputDir!\n$!\nexiting...\n";
 	my @files=grep {m/vcf$/} readdir VCF;
 	closedir VCF;
@@ -68,9 +75,12 @@ foreach my $grp (@Lines){
 		}
 	}
 	my @k = keys %hash;
-	parseVCFtoCSV(\%hash,$j,$vector,$OFile,$base,\%E);
+	parseVCFtoCSV(\%hash,$j,$vector,$OFile,$out,\%E);
 }
 
+
+Tools->printToFile($output,\@OUTPUT);
+Tools->printToFile($lbfs,\@FS);
 
 sub _LoadExclusions {
 	my $file=shift;
@@ -113,13 +123,17 @@ sub parseVCFtoCSV {
 	my %Exc  = %{$_[5]};
 	my @O;
 	push @O, "Source Sample,Contig A,A_coordinate,Type,Contig B,B_coordinate,Orientation,NumReads,Sequence,(SNP) Ref Base,(SNP) Alt Base, (SNP) Ref Ratio, (SNP) Alt Ratio";
+	my $rs=1;
+	my $ls=1;
 	foreach my $key (keys %R){
 		my $line=$R{$key};
 		my @line=split(/\t/,$line);
 		my %info = %{parseInfo($line[7],$line)};
 		$line[2] =~ s/\d+//;
 		my $nLine = $base.",".$line[0].",".$line[1];
+warn "WARNING HARDCODED FILTERING!!!!\n";
 		if(defined($info{I16})){
+		next unless ((($line[1] > 726)&&($line[1] < 3095)) || (($line[1] > 6529)&&($line[1] < 8475)) || (($line[1] > 11525)&&($line[1]<13468)) || (($line[1] > 14918)&&($line[1] < 15469)));
 			if(my $cons=_checkI16($line[3],$line[4],\%info,$snpRate,$minCov)){
 				$nLine .= ",SNP";
 				$nLine .= ",NA";
@@ -127,7 +141,7 @@ sub parseVCFtoCSV {
 				$nLine .= ",NA";
 				$nLine .= ",".$info{DP};
 				$nLine .= ",$cons";
-				push @O, $nLine;
+				push @OUTPUT, $nLine;
 			}
 		}else{
 			next if defined $Exc{$info{CHR2}}{$info{END}};
@@ -137,12 +151,19 @@ sub parseVCFtoCSV {
 			$nLine .= ",".$info{CT};
 			$nLine .= ",".$info{PE};
 			my $sequence=getSegment($line[2],$line[0],$line[1],$info{END},$info{CHR2},$info{CT},$vector,200);
-			$nLine .=",".$sequence;
-			push @O, $nLine;
+#			$nLine .=",".$sequence;
+			if(($info{CT} eq "5to3")||($info{CT} eq "3to3")){ ## left
+				push @FS, ">$base"."_LBFS-$ls\n$sequence";
+				$ls++;	
+			}else{ ## right
+				push @FS, ">$base"."_RBFS-$rs\n$sequence";
+				$rs++;	
+			}			
+			push @OUTPUT, $nLine;
 		}
 	}
-	push @O, "\n";
-	Tools->printToFile($File,\@O);
+#	push @O, "\n";
+	#Tools->printToFile($File,\@O);
 }
 
 sub _checkI16 {
@@ -217,6 +238,7 @@ sub getSegment {
 			$segmentA = lc($segmentA);
 			$segmentB = uc($segmentB);
 			$seq = $segmentB.$segmentA;
+			$seq = Tools->revcomp($seq);
 		}elsif($ct eq "3to5"){
 			## get first N nucleotides before A in ChrA, get first N nucleotides after B in Chr B
 			my $start = $coordA-$N;
@@ -247,6 +269,7 @@ sub getSegment {
 			$segmentA = lc($segmentA);
 			$segmentB = uc($segmentB);
 			$seq=$segmentB.$segmentA;
+			$seq= Tools->revcomp($seq);
 		}else{
 		}
 	}elsif($type=~m/DEL/i){
