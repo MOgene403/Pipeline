@@ -24,7 +24,7 @@ FivePrimeTrimmer= /home/ec2-user/Store1/Filtering/Lib/TrimFrontFastq.pl
 fastq_quality_trimmer = /Installs/fastx-toolkit/fastq_quality_trimmer
 PairsAndOrphans = /home/ec2-user/Store1/Filtering/Scripts/GetPairsSinglesFastqs.Illumina1.8.pl
 makedb		= /Installs/makeblastdb
-blast		= /Installs/ncbi-blast-2.2.29
+blast		= /Installs/ncbi-blast-2.2.29+/bin/blastn 
 
 [DIRECTORIES]
 reference	= /home/ec2-user/Store1/References
