@@ -25,6 +25,10 @@ my $makedb= $Config->get("PATHS","makedb");
 warn "Finding Vectors...\n";
 my $vecDir = $Config->get("DIRECTORIES","vector_dir");
 my @LineNo = $Config->getAll("VECTORS");
+if(-e $ref.".nhr"){
+}else{
+	_prepareDB($ref,$makedb);
+}
 my %files;
 foreach my $num (@LineNo){
 	my $file = $Config->get("VECTORS",$num);
@@ -47,15 +51,11 @@ sub worker {
 	my $TID=threads->tid() -1 ;
 	while(my$j=$q->dequeue_nb()){
 		my $path=$Config->get("DIRECTORIES","vector_dir")."/".$Config->get("VECTORS",$j);
+		my $file=$Config->get("DIRECTORIES","vector_dir")."/".$Config->get("VECTORS",$j).".exclusions.tab";
 		my $outputDir = $Config->get("DIRECTORIES","output_dir");
 ### Prepare References
 #/Installs/ncbi-blast-2.2.29+/bin/blastn -db Zmays. -query Vectors/Construct.21119.fasta -outfmt 6 -out 21119.exclusion.tab
 #Zea_mays.AGPv3.23.dna.genome.fa
-		if(-e $ref.".nhr"){
-		}else{
-			_prepareDB($ref,$makedb);
-		}
-		my $file=$Config->get("DIRECTORIES","vector_dir")."/".$Config->get("VECTORS",$j).".exclusions.tab";
 		my $cmd="$blast -db $ref -query $path -outfmt 6 -out $file";
 		warn $cmd."\n";	
 		`$cmd`;
