@@ -46,6 +46,7 @@ sub worker {
 		
 		my $outputDir = $Config->get("DIRECTORIES","output_dir")."/".$Config->get("CELL_LINE",$j);
 		my $base = $Config->get("CELL_LINE",$j);
+		my $insert = $Config->get("INSERTS",$j);
 		my $bwaRoot=$outputDir."/$base.Alignments";
 		my $samtools = $Config->get("PATHS","samtools");
 		my $bwaRef=$Config->get("DIRECTORIES","output_dir")."/".$Config->get("VECTORS",$j).".ref.fasta";
@@ -63,7 +64,7 @@ sub worker {
 		`$cmd`;
 		my $depthscript = $Config->get("PATHS","depthScript");
 		my $depthout	= $outputDir."/ContigDepths.txt";
-		$cmd = $samtools." depth ".$sorted.".bam | perl $depthscript > $outputDir/$base.ContigDepths.txt";
+		$cmd = $samtools." depth ".$sorted.".bam | perl $depthscript | grep -v $insert > $outputDir/$base.ContigDepths.txt";
 		`$cmd`;
 	}
 }
