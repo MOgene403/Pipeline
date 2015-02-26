@@ -20,9 +20,9 @@ RunDelly	= /home/ec2-user/Store1/Pipeline/RunDelly.bestN.pl
 depthScript	= /home/ec2-user/Store1/Pipeline/GetMaxPerContig.pl
 bcftools	= /Installs/samtools-0.1.19/bcftools/bcftools
 reference	= /home/ec2-user/Store1/References/Zea_mays.AGPv3.23.dna.genome.fa
-FivePrimeTrimmer= /home/ec2-user/Store1/Filtering/Lib/TrimFrontFastq.pl
+FivePrimeTrimmer= /home/ec2-user/Store1/Pipeline/Lib/TrimFrontFastq.pl
 fastq_quality_trimmer = /Installs/fastx-toolkit/fastq_quality_trimmer
-PairsAndOrphans = /home/ec2-user/Store1/Filtering/Scripts/GetPairsSinglesFastqs.Illumina1.8.pl
+PairsAndOrphans = /home/ec2-user/Store1/Pipeline/Scripts/GetPairsSinglesFastqs.Illumina1.8.pl
 makedb		= /Installs/makeblastdb
 blast		= /Installs/ncbi-blast-2.2.29+/bin/blastn 
 

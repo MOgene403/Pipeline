@@ -140,7 +140,7 @@ sub workerThread{
 			push @CurrentSourcePaths, $OR2;
 			push @CurrentSourcePaths, $ORO;
 		}
-		prepFinal($OutDir,@CurrentSourcePaths);
+		#prepFinal($OutDir,@CurrentSourcePaths);
 		collectTheGarbage(@GarbageCollector);
 	}
 }

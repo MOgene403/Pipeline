@@ -36,8 +36,6 @@ sub workerThread{
 	while(my $work=$q->dequeue_nb()){
 		my $grp		= $work;
 		my $base 	= $config->get("CELL_LINE",$grp);
-		my $p1		= $base.".R1.fastq";
-		my $p2		= $base.".R2.fastq";
 		my $DataDir 	= $config->get("DIRECTORIES","filtered_dir");
 		my $OutDir  	= $config->get("DIRECTORIES","output_dir");
 		my $RefDir	= $config->get("DIRECTORIES","reference");
@@ -57,11 +55,6 @@ sub workerThread{
 		my $ins 	= $config->get("INSERTS",$grp);
 		my @CurrentSourcePaths;
 		my @GarbageCollector;
-
-		my $file1=$DataDir."/".$p1;
-		my $file2=$DataDir."/".$p2;
-		die "Cannot find read 1 for group: $grp\nFile missing: $file1\nexiting...\n" unless -e $file1;
-		die "Cannot find read 2 for group: $grp\nFile missing: $file2\nexiting...\n" unless -e $file2;
 
 		my $index = $OutDir."/".$config->get("VECTORS",$grp).".ref.fasta";
 

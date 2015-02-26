@@ -1,10 +1,9 @@
 #!/usr/bin/perl
 use warnings;
 use strict;
-use lib '/home/ec2-user/Store1/Tools/Lib';
 use FindBin;
 use lib "$FindBin::Bin/Lib";
-use hdpTools;
+use Tools;
 use threads;
 use threads::shared;
 use Thread::Queue;
@@ -13,7 +12,7 @@ my $q = Thread::Queue->new();
 my $usage = "usage: perl $0 <reference fasta file> <file of contig IDs to search> <N - number of contigs to search (i.e., '50' for top 50) <id of insertional chromosome> <PE bam> <config>\n\n";
 die $usage unless $#ARGV==5;
 my $file=$ARGV[0];
-my @Best=@{hdpTools->LoadFile($ARGV[1])};
+my @Best=@{Tools->LoadFile($ARGV[1])};
 my $N  	=$ARGV[2];
 my $job	=$ARGV[3];
 my $PE	=$ARGV[4];
@@ -33,7 +32,7 @@ my $temp="./temp";
 mkdir $temp unless -e $temp;
 my $bkf=$temp."/badkeys.txt";
 
-my %Fasta=%{hdpTools->LoadFasta($file)};
+my %Fasta=%{Tools->LoadFasta($file)};
 
 my @keys = grep {!/$id/} keys %Fasta;
 
@@ -62,7 +61,7 @@ sub worker {
 			push @badkeys, $keys[$i] unless $keys[$i] eq $key;
 		}
 		my $bk=$bkf.".$job.$j";
-		hdpTools->printToFile($bk,\@badkeys);
+		Tools->printToFile($bk,\@badkeys);
 		my $outputDir 	= $Config->get("DIRECTORIES","output_dir")."/".$Config->get("CELL_LINE",$job);
 		my $base 	= $Config->get("CELL_LINE",$job);
 		my $tfileR=$outputDir."/".$base.".".$key;

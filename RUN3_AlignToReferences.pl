@@ -41,8 +41,10 @@ sub worker {
 	while(my$j=$q->dequeue_nb()){
 		my ($R1,$R2)=split(/\,/,$Config->get("DATA",$j));
 		my $prefix = $Config->get("CELL_LINE",$j);
-		my $P1=$Config->get("DIRECTORIES","filtered_dir")."/".$prefix.".R1.fastq";
-		my $P2=$Config->get("DIRECTORIES","filtered_dir")."/".$prefix.".R2.fastq";
+#		my $P1=$Config->get("DIRECTORIES","filtered_dir")."/".$prefix.".R1.fastq";
+#		my $P2=$Config->get("DIRECTORIES","filtered_dir")."/".$prefix.".R2.fastq";
+		my $P1=$Config->get("DIRECTORIES","filtered_dir")."/".$R1;
+		my $P2=$Config->get("DIRECTORIES","filtered_dir")."/".$R2;
 		
 		my $outputDir = $Config->get("DIRECTORIES","output_dir")."/".$Config->get("CELL_LINE",$j);
 		my $base = $Config->get("CELL_LINE",$j);
