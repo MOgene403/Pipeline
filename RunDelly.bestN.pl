@@ -76,14 +76,14 @@ sub worker {
 		#$cmd=$delly." -t DEL -o $tfile -q 30 -x $bk $PE";
 		#warn $cmd."\n";
 		#`$cmd`;
-		$tfile=$tfileR.".DUP.vcf";
-		$cmd=$delly." -t DUP -o $tfile -q 30 -x $bk $PE";
-		warn $cmd."\n";
-		`$cmd`;
-		$tfile=$tfileR.".INV.vcf";
-		$cmd=$delly." -t INV -o $tfile -q 30 -x $bk $PE";
-		warn $cmd."\n";
-		`$cmd`;
+		#$tfile=$tfileR.".DUP.vcf";
+		#$cmd=$delly." -t DUP -o $tfile -q 30 -x $bk $PE";
+		#warn $cmd."\n";
+		#`$cmd`;
+		#$tfile=$tfileR.".INV.vcf";
+		#$cmd=$delly." -t INV -o $tfile -q 30 -x $bk $PE";
+		#warn $cmd."\n";
+		#`$cmd`;
 	}
 }
 
